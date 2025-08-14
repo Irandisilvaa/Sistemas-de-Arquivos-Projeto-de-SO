@@ -1,1 +1,13 @@
-# Sistemas-de-Arquivos-Projeto-de-SO
+# Explorador de Arquivos K-ária
+
+Um sistema de arquivos simulado em Python com interface gráfica (`Tkinter`) que permite criar, gerenciar e manipular arquivos e pastas. Implementa conceitos de **tabela de índices**, metadados, lixeira e controle de espaço em disco.
+
+O sistema permite a criação e navegação de diretórios (`mkdir`, `cd`), criação de arquivos de texto ou importados (`touch`), exibição de informações detalhadas de arquivos e pastas, remoção com envio para a lixeira e restauração, controle de uso de disco com barra de progresso, pesquisa recursiva, e possui interface gráfica moderna e responsiva com scroll. Suporta arquivos de texto, imagens e PDF.
+
+A estrutura interna do sistema é baseada em `DirectoryNode`, que representa diretórios contendo uma lista de filhos (`children`) que funciona como **tabela de índices**, e `FileNode`, que representa arquivos, armazenando tamanho e conteúdo. O `FileSystem` (fs) gerencia todas as operações do sistema de arquivos, incluindo lixeira, metadados e controle de disco. A interface gráfica em Tkinter permite interação com botões, entradas de texto, barras de progresso e janelas modais.
+
+O sistema foi desenvolvido para Python 3.8+ e requer a biblioteca Pillow (`pip install pillow`). Para usar, basta clonar o repositório (`git clone https://github.com/seu-usuario/explorador-karia.git`), entrar na pasta e executar `python main.py`.
+
+Na interface, é possível criar pastas, criar arquivos, remover arquivos ou pastas, voltar para o diretório pai, atualizar a lista de arquivos exibidos e pesquisar arquivos ou pastas no diretório atual e subdiretórios. Ao clicar em um arquivo ou pasta, suas informações detalhadas são exibidas e arquivos na lixeira podem ser restaurados. A barra de uso de disco mostra o espaço utilizado em relação ao tamanho máximo configurado (`MAX_DISK_SIZE`). O diretório raiz é `C:/` e cada diretório possui limite de filhos definido por `MAX_CHILDREN`. O sistema não acessa disco real; tudo é simulado em memória. A lixeira é representada pela pasta `.lixeira` na raiz.  
+
+O código está organizado em `interface.py` (interface gráfica e lógica de interação), `filesystem.py` (implementação de FileSystem, DirectoryNode, FileNode), `comandos.py` (instância do sistema de arquivos `fs`), `README.md` (este arquivo) e `requirements.txt` (bibliotecas necessárias). Futuras melhorias incluem implementar tabela de índices explícita com dicionário/hash para buscas mais rápidas, suporte a múltiplos usuários e permissões, adicionar visualização de miniaturas para arquivos de imagem e exportar/importar o sistema de arquivos real em disco.
