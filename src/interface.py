@@ -8,11 +8,28 @@ if not hasattr(fs, 'root') or fs.root is None:
     fs.root = DirectoryNode("C:")
     fs.cwd = fs.root
 
+# ---------------- Função auxiliar ----------------
+def exists_in_tree(node: DirectoryNode, name: str) -> bool:
+    """
+    Verifica se já existe um arquivo ou pasta com o mesmo nome
+    em toda a árvore a partir do nó dado.
+    """
+    if node.name == name:
+        return True
+    for child in node.children:
+        if child.name == name:
+            return True
+        if isinstance(child, DirectoryNode):
+            if exists_in_tree(child, name):
+                return True
+    return False
+
+# ---------------- Classe FileExplorer ----------------
 class FileExplorer(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Explorador de Arquivos K-ária")
-        self.geometry("950x650")
+        self.state("zoomed")  
         self.configure(bg="#e6e6e6")
 
         # --- Barra superior ---
@@ -28,11 +45,11 @@ class FileExplorer(tk.Tk):
         # Botões principais à esquerda
         left_frame = tk.Frame(self.top_frame, bg="#2f3640")
         left_frame.pack(side="left", padx=5)
-        tk.Button(left_frame, text="Criar Pasta", command=self.mkdir, **btn_style).pack(side="left", padx=3)
-        tk.Button(left_frame, text="Criar Arquivo", command=self.touch, **btn_style).pack(side="left", padx=3)
-        tk.Button(left_frame, text="Remover", command=self.rm, **btn_style).pack(side="left", padx=3)
-        tk.Button(left_frame, text="Voltar", command=self.cd_up, **btn_style).pack(side="left", padx=3)
-        tk.Button(left_frame, text="Atualizar", command=self.refresh, **btn_style).pack(side="left", padx=3)
+        tk.Button(left_frame, text="📁 Criar Pasta", command=self.mkdir, **btn_style).pack(side="left", padx=3)
+        tk.Button(left_frame, text="📝 Criar Arquivo", command=self.touch, **btn_style).pack(side="left", padx=3)
+        tk.Button(left_frame, text="🗑️ Remover", command=self.rm, **btn_style).pack(side="left", padx=3)
+        tk.Button(left_frame, text="⬆️ Voltar", command=self.cd_up, **btn_style).pack(side="left", padx=3)
+        tk.Button(left_frame, text="🔄 Atualizar", command=self.refresh, **btn_style).pack(side="left", padx=3)
 
         # Barra de pesquisa separada à direita
         right_frame = tk.Frame(self.top_frame, bg="#2f3640")
@@ -103,7 +120,7 @@ class FileExplorer(tk.Tk):
             frame.pack(fill="x", pady=2, padx=2)
 
             if isinstance(node, DirectoryNode):
-                b = tk.Button(frame, text=f"[DIR] {node.name}", anchor="w", font=("Consolas", 11, "bold"),
+                b = tk.Button(frame, text=f"📁 {node.name}", anchor="w", font=("Consolas", 11, "bold"),
                               bg="#cce5ff", fg="#003366", relief="flat",
                               activebackground="#99ccff", command=lambda n=node: self.open_dir(n))
                 b.pack(fill="x", padx=5, pady=2)
@@ -137,9 +154,14 @@ class FileExplorer(tk.Tk):
             restore_btn = tk.Button(info_win, text="Restaurar", command=restore_node, bg="#cce5ff")
             restore_btn.pack(pady=5)
 
+    # -------------------- Criar pasta --------------------
     def mkdir(self):
         name = simpledialog.askstring("Criar Pasta", "Nome da pasta:")
         if not name:
+            return
+        # Verifica duplicidade em toda a árvore
+        if exists_in_tree(fs.root, name):
+            messagebox.showerror("Erro", f"Já existe um arquivo ou pasta chamado '{name}' na árvore!")
             return
         try:
             fs.mkdir(name)
@@ -147,11 +169,16 @@ class FileExplorer(tk.Tk):
             messagebox.showerror("Erro", str(e))
         self.refresh()
 
+    # -------------------- Criar arquivo --------------------
     def touch(self):
         while True:
             name = simpledialog.askstring("Criar Arquivo", "Nome do arquivo:")
             if not name:
                 return
+            # Verifica duplicidade em toda a árvore
+            if exists_in_tree(fs.root, name):
+                messagebox.showerror("Erro", f"Já existe um arquivo ou pasta chamado '{name}' na árvore!")
+                continue
 
             tipo = simpledialog.askstring(
                 "Tipo de Arquivo",
@@ -228,6 +255,7 @@ class FileExplorer(tk.Tk):
 
         self.refresh()
 
+    # -------------------- Remover --------------------
     def rm(self):
         selected = simpledialog.askstring("Remover", "Nome do arquivo ou pasta:")
         if not selected:
@@ -252,6 +280,7 @@ class FileExplorer(tk.Tk):
             messagebox.showerror("Erro", str(e))
         self.refresh()
 
+    # -------------------- Voltar --------------------
     def cd_up(self):
         try:
             fs.cd("..")
@@ -259,6 +288,7 @@ class FileExplorer(tk.Tk):
             messagebox.showerror("Erro", str(e))
         self.refresh()
 
+    # -------------------- Pesquisa --------------------
     def search(self):
         query = self.search_var.get().strip()
         if not query:
@@ -293,6 +323,7 @@ class FileExplorer(tk.Tk):
             btn = tk.Button(frame, text="Ir para o local do arquivo", command=go_to, bg="#cce5ff")
             btn.pack(side="right", padx=5, pady=2)
 
+# -------------------- Main --------------------
 if __name__ == "__main__":
     app = FileExplorer()
     app.mainloop()
