@@ -13,27 +13,40 @@ class FileExplorer(tk.Tk):
         super().__init__()
         self.title("Explorador de Arquivos K-ária")
         self.geometry("950x650")
-        self.configure(bg="#e6e6e6")  # fundo mais claro
+        self.configure(bg="#e6e6e6")
 
         # --- Barra superior ---
-        self.top_frame = tk.Frame(self, bg="#3a3a3a", pady=5)
+        self.top_frame = tk.Frame(self, bg="#2f3640", pady=5)
         self.top_frame.pack(fill="x")
 
-        btn_style = {"bg": "#5a5a5a", "fg": "white", "relief": "flat", "activebackground": "#7a7a7a",
-                     "width": 12, "font": ("Consolas", 10, "bold")}
+        btn_style = {
+            "bg": "#40739e", "fg": "white", "relief": "flat",
+            "activebackground": "#487eb0", "activeforeground": "white",
+            "width": 12, "font": ("Segoe UI", 10, "bold"), "bd": 0
+        }
 
-        tk.Button(self.top_frame, text="Criar Pasta", command=self.mkdir, **btn_style).pack(side="left", padx=5)
-        tk.Button(self.top_frame, text="Criar Arquivo", command=self.touch, **btn_style).pack(side="left", padx=5)
-        tk.Button(self.top_frame, text="Remover", command=self.rm, **btn_style).pack(side="left", padx=5)
-        tk.Button(self.top_frame, text="Voltar", command=self.cd_up, **btn_style).pack(side="left", padx=5)
-        tk.Button(self.top_frame, text="Atualizar", command=self.refresh, **btn_style).pack(side="left", padx=5)
-        tk.Button(self.top_frame, text="Pesquisar", command=self.search, **btn_style).pack(side="left", padx=5)
+        # Botões principais à esquerda
+        left_frame = tk.Frame(self.top_frame, bg="#2f3640")
+        left_frame.pack(side="left", padx=5)
+        tk.Button(left_frame, text="Criar Pasta", command=self.mkdir, **btn_style).pack(side="left", padx=3)
+        tk.Button(left_frame, text="Criar Arquivo", command=self.touch, **btn_style).pack(side="left", padx=3)
+        tk.Button(left_frame, text="Remover", command=self.rm, **btn_style).pack(side="left", padx=3)
+        tk.Button(left_frame, text="Voltar", command=self.cd_up, **btn_style).pack(side="left", padx=3)
+        tk.Button(left_frame, text="Atualizar", command=self.refresh, **btn_style).pack(side="left", padx=3)
 
-        # --- Barra de pesquisa ---
+        # Barra de pesquisa separada à direita
+        right_frame = tk.Frame(self.top_frame, bg="#2f3640")
+        right_frame.pack(side="right", padx=10)
+
         self.search_var = tk.StringVar()
-        self.search_entry = tk.Entry(self.top_frame, textvariable=self.search_var, width=30, font=("Consolas", 10))
-        self.search_entry.pack(side="left", padx=5)
-        self.search_entry.configure(relief="flat", bg="#f2f2f2", fg="#333333")
+        search_entry = tk.Entry(right_frame, textvariable=self.search_var, width=25,
+                                font=("Segoe UI", 10), relief="flat", bg="#f1f2f6")
+        search_entry.pack(side="left", ipady=3, padx=(0,5))
+
+        # Botão da lupa
+        search_btn = tk.Button(right_frame, text="🔍", font=("Segoe UI", 12), bg="#f1f2f6",
+                               relief="flat", command=self.search)
+        search_btn.pack(side="left")
 
         # --- Caminho atual ---
         self.path_label = tk.Label(self, text="C:/", font=("Consolas", 12, "bold"), fg="#1a73e8", bg="#e6e6e6")
@@ -135,16 +148,21 @@ class FileExplorer(tk.Tk):
         self.refresh()
 
     def touch(self):
-        name = simpledialog.askstring("Criar Arquivo", "Nome do arquivo:")
-        if not name:
-            return
+        while True:
+            name = simpledialog.askstring("Criar Arquivo", "Nome do arquivo:")
+            if not name:
+                return
 
-        tipo = simpledialog.askstring(
-            "Tipo de Arquivo",
-            "Escolha o tipo de arquivo:\n1 - Texto\n2 - Outro (tamanho manual)\n3 - Importar Arquivo"
-        )
-        if not tipo:
-            return
+            tipo = simpledialog.askstring(
+                "Tipo de Arquivo",
+                "Escolha o tipo de arquivo:\n1 - Texto\n2 - Outro (tamanho manual)\n3 - Importar Arquivo"
+            )
+            if not tipo:
+                return
+            if tipo in ["1","2","3"]:
+                break
+            else:
+                messagebox.showerror("Opção inválida", "Digite uma opção válida (1, 2 ou 3).")
 
         if tipo == "1":
             text_win = tk.Toplevel(self)
@@ -247,12 +265,14 @@ class FileExplorer(tk.Tk):
             messagebox.showwarning("Pesquisa", "Digite um nome para pesquisar!")
             return
         results = []
+
         def recursive_search(node, path=""):
             if query.lower() in node.name.lower():
                 results.append((node, path + "/" + node.name if path else "/" + node.name))
             if isinstance(node, DirectoryNode):
                 for child in node.children:
                     recursive_search(child, path + "/" + node.name if path else "/" + node.name)
+
         recursive_search(fs.cwd)
         if not results:
             messagebox.showinfo("Pesquisa", f"Nenhum resultado encontrado para '{query}'")
@@ -264,10 +284,12 @@ class FileExplorer(tk.Tk):
             frame.pack(fill="x", pady=2, padx=2)
             label = tk.Label(frame, text=f"{node.name} - {full_path}", anchor="w", bg="#ffffcc")
             label.pack(side="left", padx=5, pady=2, fill="x", expand=True)
+
             def go_to(n=node):
                 fs.cwd = n.parent if n.parent else fs.root
                 self.refresh()
                 messagebox.showinfo("Navegar", f"Você foi para o diretório de '{n.name}'")
+
             btn = tk.Button(frame, text="Ir para o local do arquivo", command=go_to, bg="#cce5ff")
             btn.pack(side="right", padx=5, pady=2)
 
