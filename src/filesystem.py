@@ -196,6 +196,25 @@ class FileSystem:
         node.atime = time.time()  
         return node.content
 
+    def write_file(self, name: str, content: str):
+        global current_disk_usage
+        node = self.cwd.get_child(name)
+        if not isinstance(node, FileNode):
+            raise IsADirectoryError(f"{node.path} é um diretório, não um arquivo")
+            
+        novo_tamanho = len(content.encode("utf-8"))  
+        diferenca = novo_tamanho - node.size
+        if current_disk_usage + diferenca > MAX_DISK_SIZE:
+            raise MemoryError("Disco cheio")
+
+        node.content = content
+        node.size = novo_tamanho
+        node.mtime = time.time()
+        current_disk_usage += diferenca
+
+        file_index_table[node.path]["size"] = node.size
+        file_index_table[node.path]["modified"] = node.mtime
+
 fs = FileSystem()
 
 # ---------------------- Tkinter FileExplorer ----------------------
