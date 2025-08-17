@@ -189,6 +189,13 @@ class FileSystem:
         global current_disk_usage
         return current_disk_usage
 
+    def read_file(self, name: str) -> str:
+        node = self.cwd.get_child(name)
+        if not isinstance(node, FileNode):
+            raise IsADirectoryError(f"{node.path} é um diretório, não um arquivo")
+        node.atime = time.time()  
+        return node.content
+
 fs = FileSystem()
 
 # ---------------------- Tkinter FileExplorer ----------------------
