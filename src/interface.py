@@ -235,7 +235,7 @@ class FileExplorer(tk.Tk):
                 edit_btn = tk.Button(info_win, text="✏️ Editar", command=edit_text, bg="#fff3cd")
                 edit_btn.pack(pady=5)
 
-        # --- Se estiver na lixeira, permitir restaurar ---
+        # --- Se estiver na lixeira, permitir restaurar
         if fs.cwd == fs.trash:
             def restore_node():
                 try:
@@ -248,7 +248,6 @@ class FileExplorer(tk.Tk):
             restore_btn = tk.Button(info_win, text="♻️ Restaurar", command=restore_node, bg="#cce5ff")
             restore_btn.pack(pady=5)
         
-        # Novo botão para Copiar
         def copy_node():
             self.copied_node = node
             messagebox.showinfo("Copiado", f"'{node.name}' foi copiado. Vá para a pasta de destino e clique em 'Colar'.")
@@ -258,7 +257,7 @@ class FileExplorer(tk.Tk):
         copy_btn = tk.Button(info_win, text="📄 Copiar", command=copy_node, bg="#e5e5ff", fg="black")
         copy_btn.pack(pady=5)
 
-    # -------------------- Criar pasta --------------------
+    # Criar pasta 
     def mkdir(self):
         """Cria uma nova pasta no diretório atual."""
         # Bloqueia criação se o cwd estiver na Lixeira (ou em subpastas dela)
@@ -277,7 +276,7 @@ class FileExplorer(tk.Tk):
         name = simpledialog.askstring("Criar Pasta", "Nome da pasta:")
         if not name:
             return
-        # Verifica duplicidade em toda a árvore
+        # Verifica duplicidade de arquivos ou pastas em toda a árvore
         if exists_in_tree(fs.root, name):
             messagebox.showerror("Erro", f"Já existe um arquivo ou pasta chamado '{name}' na árvore!")
             return
@@ -287,8 +286,7 @@ class FileExplorer(tk.Tk):
             messagebox.showerror("Erro", str(e))
         self.refresh()
 
-    # -------------------- Criar arquivo --------------------
-    def touch(self):
+    # arquivo
         """Cria um novo arquivo no diretório atual."""
         # Bloqueia criação se o cwd estiver na Lixeira (ou em subpastas dela)
         trash = getattr(fs, "trash", None)

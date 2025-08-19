@@ -69,7 +69,7 @@ class DirectoryNode(Node):
 
 # ---------------------- FileSystem ----------------------
 class FileSystem:
-    def __init__(self):
+    def _init_(self):
         self.root = DirectoryNode(name="C:")
         self.cwd = self.root
         self.trash = DirectoryNode(name="Lixeira")
