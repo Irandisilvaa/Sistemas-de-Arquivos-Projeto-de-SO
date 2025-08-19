@@ -193,4 +193,33 @@ fs = FileSystem()
 
 if __name__ == "__main__":
     app = FileSystem()
-    
+
+
+def refresh(self):
+        for widget in self.scrollable_frame.winfo_children():
+            widget.destroy()
+        path_nodes = []
+        node = fs.cwd
+        while node and node.parent:
+            path_nodes.insert(0, node.name)
+            node = node.parent
+        full_path = "C:/" + "/".join(path_nodes) if path_nodes else "C:/"
+        self.path_label.config(text=full_path)
+
+        uso_atual = fs.get_disk_usage()
+        self.disk_label.config(text=f"Uso de disco: {uso_atual}/{MAX_DISK_SIZE} bytes")
+        self.disk_progress['value'] = (uso_atual / MAX_DISK_SIZE) * 100
+
+        for node in fs.cwd.children:
+            frame = tk.Frame(self.scrollable_frame, bg="#ffffff", bd=0, relief="flat")
+            frame.pack(fill="x", pady=2, padx=2)
+            if isinstance(node, DirectoryNode):
+                b = tk.Button(frame, text=f"📁 {node.name}", anchor="w", font=("Consolas", 11, "bold"),
+                              bg="#cce5ff", fg="#003366", relief="flat",
+                              activebackground="#99ccff", command=lambda n=node: self.open_dir(n))
+                b.pack(fill="x", padx=5, pady=2)
+            else:
+                b = tk.Button(frame, text=f"{node.name} ({node.size} bytes)", anchor="w", font=("Consolas", 11),
+                              bg="#e6ffe6", fg="#004d00", relief="flat",
+                              activebackground="#ccffcc", command=lambda n=node: self.show_info(n))
+                b.pack(fill="x", padx=5, pady=2)
