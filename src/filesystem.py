@@ -1,8 +1,7 @@
 import time
 from dataclasses import dataclass, field
 from typing import List, Optional
-from pathlib import Path
-import copy
+
 
 # Configurações iniciais 
 MAX_CHILDREN = 10
