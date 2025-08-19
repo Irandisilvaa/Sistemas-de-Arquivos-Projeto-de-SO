@@ -235,14 +235,14 @@ class FileExplorer(tk.Tk):
         self.path_label = tk.Label(self, text="C:/", font=("Consolas", 12, "bold"), fg="#1a73e8", bg="#e6e6e6")
         self.path_label.pack(fill="x", pady=4, padx=10)
 
-        # --- Uso de disco ---
+        # Uso de disco 
         self.disk_label = tk.Label(self, text="", font=("Consolas", 10), bg="#e6e6e6", fg="#333333")
         self.disk_label.pack(fill="x", pady=2, padx=10)
 
         self.disk_progress = ttk.Progressbar(self, orient="horizontal", length=450, mode="determinate")
         self.disk_progress.pack(pady=2, padx=10)
 
-        # --- Frame principal com scroll ---
+        
         self.main_frame = tk.Frame(self, bg="#e6e6e6")
         self.main_frame.pack(fill="both", expand=True, padx=10, pady=5)
 
@@ -263,7 +263,7 @@ class FileExplorer(tk.Tk):
 
         self.refresh()
 
-    # -------------------- Funções de interface --------------------
+    #  Funções de interface 
     def refresh(self):
         """Atualiza a exibição do explorador de arquivos."""
         for widget in self.scrollable_frame.winfo_children():
@@ -375,7 +375,7 @@ class FileExplorer(tk.Tk):
         copy_btn = tk.Button(info_win, text="📄 Copiar", command=copy_node, bg="#e5e5ff", fg="black")
         copy_btn.pack(pady=5)
 
-    # -------------------- Criar pasta --------------------
+    # Criar pasta
     def mkdir(self):
         """Cria uma nova pasta no diretório atual."""
         trash_ancestor = False
@@ -400,7 +400,7 @@ class FileExplorer(tk.Tk):
             messagebox.showerror("Erro", str(e))
         self.refresh()
 
-    # -------------------- Criar arquivo --------------------
+    # Criar arquivo
     def touch(self):
         """Cria um novo arquivo no diretório atual."""
         trash_ancestor = False
@@ -476,7 +476,7 @@ class FileExplorer(tk.Tk):
                 messagebox.showerror("Erro", str(e))
             self.refresh()
 
-    # -------------------- Remover --------------------
+    # Remover 
     def rm(self):
         """Move o arquivo ou pasta selecionado para a Lixeira ou o remove permanentemente."""
         selected = simpledialog.askstring("Remover", "Nome do arquivo ou pasta:")
@@ -501,7 +501,7 @@ class FileExplorer(tk.Tk):
             messagebox.showerror("Erro", str(e))
         self.refresh()
 
-    # -------------------- Voltar --------------------
+    # Voltar 
     def cd_up(self):
         """Volta para o diretório pai."""
         try:
@@ -510,7 +510,7 @@ class FileExplorer(tk.Tk):
             messagebox.showerror("Erro", str(e))
         self.refresh()
 
-    # -------------------- Pesquisa --------------------
+    #Pesquisa
     def search(self):
         """Pesquisa por arquivos ou pastas na árvore de diretórios atual."""
         query = self.search_var.get().strip()
@@ -557,7 +557,7 @@ class FileExplorer(tk.Tk):
             btn = tk.Button(frame, text="Ir para o local do arquivo", command=go_to, bg="#cce5ff")
             btn.pack(side="right", padx=5, pady=2)
     
-    # -------------------- Colar --------------------
+    #  Colar 
     def paste_node(self):
         """Cola o nó copiado no diretório atual."""
         if not self.copied_node:
@@ -608,7 +608,6 @@ class FileExplorer(tk.Tk):
         self.refresh()
         messagebox.showinfo("Sucesso", f"'{new_node.name}' colado com sucesso!")
         
-# -------------------- Main --------------------
 if __name__ == "__main__":
     app = FileExplorer()
     app.mainloop()
