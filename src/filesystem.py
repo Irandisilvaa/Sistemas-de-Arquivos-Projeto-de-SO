@@ -235,6 +235,4 @@ class FileSystem:
         # Atualiza o uso do disco
         self.add_disk_usage_for_node(new_node)
         return new_node
-
-# ---------------------- Instância global ----------------------
 fs = FileSystem()
