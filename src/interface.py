@@ -1,12 +1,20 @@
 import tkinter as tk
 from tkinter import simpledialog, messagebox, ttk, filedialog
 from filesystem import DirectoryNode, FileNode, MAX_DISK_SIZE, fs
-from PIL import Image, ImageTk
+import copy
 
 # --- Inicializa a raiz C: ---
 if not hasattr(fs, 'root') or fs.root is None:
     fs.root = DirectoryNode("C:")
     fs.cwd = fs.root
+    
+    # Adiciona a Lixeira se ela não existir
+    if "Lixeira" not in [n.name for n in fs.root.children]:
+        fs.mkdir("Lixeira")
+        fs.trash = fs.root.get_child("Lixeira")
+    else:
+        fs.trash = fs.root.get_child("Lixeira")
+
 
 # ---------------- Função auxiliar ----------------
 def exists_in_tree(node: DirectoryNode, name: str) -> bool:
@@ -29,8 +37,11 @@ class FileExplorer(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Explorador de Arquivos K-ária")
-        self.state("zoomed")  
+        self.state("zoomed")
         self.configure(bg="#e6e6e6")
+        
+        # Variável para armazenar o nó copiado
+        self.copied_node = None
 
         # --- Barra superior ---
         self.top_frame = tk.Frame(self, bg="#2f3640", pady=5)
@@ -41,6 +52,28 @@ class FileExplorer(tk.Tk):
             "activebackground": "#487eb0", "activeforeground": "white",
             "width": 12, "font": ("Segoe UI", 10, "bold"), "bd": 0
         }
+        
+        # Estilos específicos para o botão de colar
+        self.paste_btn_style_active = {
+            "bg": "#6a89cc",  # Cor mais clara quando ativo
+            "fg": "white",
+            "relief": "flat",
+            "activebackground": "#487eb0",
+            "activeforeground": "white",
+            "width": 12,
+            "font": ("Segoe UI", 10, "bold"),
+            "bd": 0
+        }
+        self.paste_btn_style_disabled = {
+            "bg": "#40739e",  # Cor padrão quando desabilitado
+            "fg": "white",
+            "relief": "flat",
+            "activebackground": "#487eb0",
+            "activeforeground": "white",
+            "width": 12,
+            "font": ("Segoe UI", 10, "bold"),
+            "bd": 0
+        }
 
         # Botões principais à esquerda
         left_frame = tk.Frame(self.top_frame, bg="#2f3640")
@@ -49,6 +82,10 @@ class FileExplorer(tk.Tk):
         tk.Button(left_frame, text="📝 Criar Arquivo", command=self.touch, **btn_style).pack(side="left", padx=3)
         tk.Button(left_frame, text="🗑️ Remover", command=self.rm, **btn_style).pack(side="left", padx=3)
         tk.Button(left_frame, text="⬆️ Voltar", command=self.cd_up, **btn_style).pack(side="left", padx=3)
+
+        # Botão para colar (agora global)
+        self.paste_btn = tk.Button(left_frame, text="📋 Colar", command=self.paste_node, **self.paste_btn_style_disabled, state="disabled")
+        self.paste_btn.pack(side="left", padx=3)
         
         # Barra de pesquisa separada à direita
         right_frame = tk.Frame(self.top_frame, bg="#2f3640")
@@ -96,9 +133,9 @@ class FileExplorer(tk.Tk):
 
         self.refresh()
 
-
     # -------------------- Funções de interface --------------------
-    def refresh(self): #realizamos a cada o refresh a depois de cada interação que fazemos
+    def refresh(self):
+        """Atualiza a exibição do explorador de arquivos."""
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
 
@@ -121,20 +158,28 @@ class FileExplorer(tk.Tk):
 
             if isinstance(node, DirectoryNode):
                 b = tk.Button(frame, text=f"📁 {node.name}", anchor="w", font=("Consolas", 11, "bold"),
-                              bg="#cce5ff", fg="#003366", relief="flat",
-                              activebackground="#99ccff", command=lambda n=node: self.open_dir(n))
+                                bg="#cce5ff", fg="#003366", relief="flat",
+                                activebackground="#99ccff", command=lambda n=node: self.open_dir(n))
                 b.pack(fill="x", padx=5, pady=2)
             else:
                 b = tk.Button(frame, text=f"{node.name} ({node.size} bytes)", anchor="w", font=("Consolas", 11),
-                              bg="#e6ffe6", fg="#004d00", relief="flat",
-                              activebackground="#ccffcc", command=lambda n=node: self.show_info(n))
+                                bg="#e6ffe6", fg="#004d00", relief="flat",
+                                activebackground="#ccffcc", command=lambda n=node: self.show_info(n))
                 b.pack(fill="x", padx=5, pady=2)
+        
+        # Habilita ou desabilita o botão de colar e muda a cor para feedback visual
+        if self.copied_node is None:
+            self.paste_btn.config(state="disabled", **self.paste_btn_style_disabled)
+        else:
+            self.paste_btn.config(state="normal", **self.paste_btn_style_active)
 
     def open_dir(self, node):
+        """Muda o diretório atual para o nó selecionado."""
         fs.cwd = node
         self.refresh()
 
     def show_info(self, node):
+        """Exibe uma janela com informações sobre o arquivo ou pasta."""
         info = fs.stat(node.name)
         text = "\n".join(f"{k}: {v}" for k, v in info.items())
         info_win = tk.Toplevel(self)
@@ -142,6 +187,55 @@ class FileExplorer(tk.Tk):
         info_label = tk.Label(info_win, text=text, justify="left", font=("Consolas", 10))
         info_label.pack(padx=10, pady=10)
 
+        # --- Se for um arquivo de texto, adicionar botões para abrir e editar ---
+        if isinstance(node, FileNode) and isinstance(getattr(node, "content", None), str):
+            # Botão Abrir
+            def open_text():
+                text_win = tk.Toplevel(self)
+                text_win.title(f"Conteúdo: {node.name}")
+                text_win.geometry("600x400")
+
+                text_box = tk.Text(text_win, wrap="word", width=70, height=20)
+                text_box.pack(padx=10, pady=10, fill="both", expand=True)
+                text_box.insert("1.0", node.content)
+                text_box.config(state="disabled")  # somente leitura
+
+            open_btn = tk.Button(info_win, text="📖 Abrir", command=open_text, bg="#d4edda")
+            open_btn.pack(pady=5)
+
+            # Adiciona o botão "Editar" somente se o diretório atual não for a Lixeira
+            if fs.cwd != fs.trash:
+                def edit_text():
+                    edit_win = tk.Toplevel(self)
+                    edit_win.title(f"Editar: {node.name}")
+                    edit_win.geometry("600x400")
+
+                    text_box = tk.Text(edit_win, wrap="word", width=70, height=20)
+                    text_box.pack(padx=10, pady=10, fill="both", expand=True)
+                    text_box.insert("1.0", node.content)
+
+                    def save_edit():
+                        new_content = text_box.get("1.0", tk.END).rstrip("\n")
+                        new_size = len(new_content.encode("utf-8"))
+
+                        try:
+                            # Chama a função do sistema de arquivos para atualizar o tamanho
+                            fs.update_file_size(node, new_size)
+                            node.content = new_content
+                            edit_win.destroy()
+                            self.refresh()
+                            messagebox.showinfo("Sucesso", f"Arquivo '{node.name}' atualizado com sucesso!")
+                        except Exception as e:
+                            messagebox.showerror("Erro", str(e))
+
+                    save_btn = tk.Button(edit_win, text="💾 Salvar", command=save_edit, bg="#cce5ff",
+                                        font=("Consolas", 12, "bold"), width=10, height=2)
+                    save_btn.pack(pady=10)
+
+                edit_btn = tk.Button(info_win, text="✏️ Editar", command=edit_text, bg="#fff3cd")
+                edit_btn.pack(pady=5)
+
+        # --- Se estiver na lixeira, permitir restaurar ---
         if fs.cwd == fs.trash:
             def restore_node():
                 try:
@@ -151,11 +245,35 @@ class FileExplorer(tk.Tk):
                     self.refresh()
                 except Exception as e:
                     messagebox.showerror("Erro", str(e))
-            restore_btn = tk.Button(info_win, text="Restaurar", command=restore_node, bg="#cce5ff")
+            restore_btn = tk.Button(info_win, text="♻️ Restaurar", command=restore_node, bg="#cce5ff")
             restore_btn.pack(pady=5)
+        
+        # Novo botão para Copiar
+        def copy_node():
+            self.copied_node = node
+            messagebox.showinfo("Copiado", f"'{node.name}' foi copiado. Vá para a pasta de destino e clique em 'Colar'.")
+            info_win.destroy()
+            self.refresh()
+            
+        copy_btn = tk.Button(info_win, text="📄 Copiar", command=copy_node, bg="#e5e5ff", fg="black")
+        copy_btn.pack(pady=5)
 
     # -------------------- Criar pasta --------------------
     def mkdir(self):
+        """Cria uma nova pasta no diretório atual."""
+        # Bloqueia criação se o cwd estiver na Lixeira (ou em subpastas dela)
+        trash = getattr(fs, "trash", None)
+        n = fs.cwd
+        inside_trash = False
+        while n is not None:
+            if n == trash:
+                inside_trash = True
+                break
+            n = n.parent
+        if inside_trash:
+            messagebox.showerror("Erro", "Não é permitido criar pastas dentro da Lixeira!")
+            return
+
         name = simpledialog.askstring("Criar Pasta", "Nome da pasta:")
         if not name:
             return
@@ -171,6 +289,20 @@ class FileExplorer(tk.Tk):
 
     # -------------------- Criar arquivo --------------------
     def touch(self):
+        """Cria um novo arquivo no diretório atual."""
+        # Bloqueia criação se o cwd estiver na Lixeira (ou em subpastas dela)
+        trash = getattr(fs, "trash", None)
+        n = fs.cwd
+        inside_trash = False
+        while n is not None:
+            if n == trash:
+                inside_trash = True
+                break
+            n = n.parent
+        if inside_trash:
+            messagebox.showerror("Erro", "Não é permitido criar arquivos dentro da Lixeira!")
+            return
+
         while True:
             name = simpledialog.askstring("Criar Arquivo", "Nome do arquivo:")
             if not name:
@@ -186,7 +318,7 @@ class FileExplorer(tk.Tk):
             )
             if not tipo:
                 return
-            if tipo in ["1","2","3"]:
+            if tipo in ["1", "2", "3"]:
                 break
             else:
                 messagebox.showerror("Opção inválida", "Digite uma opção válida (1, 2 ou 3).")
@@ -213,7 +345,7 @@ class FileExplorer(tk.Tk):
                     messagebox.showerror("Erro", str(e))
 
             ok_btn = tk.Button(text_win, text="OK", command=save_text, bg="#cce5ff",
-                               font=("Consolas", 12, "bold"), width=10, height=2)
+                                font=("Consolas", 12, "bold"), width=10, height=2)
             ok_btn.pack(pady=10)
 
         elif tipo == "2":
@@ -257,6 +389,7 @@ class FileExplorer(tk.Tk):
 
     # -------------------- Remover --------------------
     def rm(self):
+        """Move o arquivo ou pasta selecionado para a Lixeira ou o remove permanentemente."""
         selected = simpledialog.askstring("Remover", "Nome do arquivo ou pasta:")
         if not selected:
             return
@@ -282,6 +415,7 @@ class FileExplorer(tk.Tk):
 
     # -------------------- Voltar --------------------
     def cd_up(self):
+        """Volta para o diretório pai."""
         try:
             fs.cd("..")
         except Exception as e:
@@ -290,6 +424,7 @@ class FileExplorer(tk.Tk):
 
     # -------------------- Pesquisa --------------------
     def search(self):
+        """Pesquisa por arquivos ou pastas na árvore de diretórios atual."""
         query = self.search_var.get().strip()
         if not query:
             messagebox.showwarning("Pesquisa", "Digite um nome para pesquisar!")
@@ -322,6 +457,59 @@ class FileExplorer(tk.Tk):
 
             btn = tk.Button(frame, text="Ir para o local do arquivo", command=go_to, bg="#cce5ff")
             btn.pack(side="right", padx=5, pady=2)
+    
+    # -------------------- Colar --------------------
+    def paste_node(self):
+        """Cola o nó copiado no diretório atual."""
+        if not self.copied_node:
+            messagebox.showerror("Erro", "Nenhum arquivo ou pasta para colar.")
+            return
+
+        # Verifica se o diretório atual está na Lixeira
+        trash = getattr(fs, "trash", None)
+        n = fs.cwd
+        inside_trash = False
+        while n is not None:
+            if n == trash:
+                inside_trash = True
+                break
+            n = n.parent
+        if inside_trash:
+            messagebox.showerror("Erro", "Não é permitido colar itens na Lixeira!")
+            return
+
+        # Cria uma cópia profunda do nó para não afetar o original
+        try:
+            new_node = copy.deepcopy(self.copied_node)
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao copiar o nó: {e}")
+            return
+
+        # Manipula o nome para evitar conflitos
+        original_name = new_node.name
+        new_name = original_name
+        counter = 1
+        while new_name in [child.name for child in fs.cwd.children]:
+            new_name = f"{original_name} (Cópia{'' if counter == 1 else ' ' + str(counter)})"
+            counter += 1
+        
+        new_node.name = new_name
+        
+        # Define o novo pai e adiciona o nó ao diretório atual
+        # Isso garante que o caminho do novo arquivo/pasta seja atualizado automaticamente.
+        new_node.parent = fs.cwd
+        fs.cwd.children.append(new_node)
+        
+        # Se for um arquivo, ajusta o uso de disco
+        if isinstance(new_node, FileNode):
+            fs.total_disk_usage += new_node.size
+        else: # Se for uma pasta, calcula o tamanho total dos arquivos nela
+            total_size = new_node.get_size()
+            fs.total_disk_usage += total_size
+
+        messagebox.showinfo("Sucesso", f"'{original_name}' foi colado como '{new_name}'.")
+        self.copied_node = None # Limpa a área de transferência
+        self.refresh()
 
 # -------------------- Main --------------------
 if __name__ == "__main__":

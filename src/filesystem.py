@@ -1,9 +1,8 @@
-import tkinter as tk
-from tkinter import simpledialog, messagebox, ttk, filedialog
+import time
 from dataclasses import dataclass, field
 from typing import List, Optional
-import time
 from pathlib import Path
+import copy
 
 # ---------------------- Configurações ----------------------
 MAX_CHILDREN = 5
@@ -73,9 +72,10 @@ class FileSystem:
     def __init__(self):
         self.root = DirectoryNode(name="C:")
         self.cwd = self.root
-        self.trash = DirectoryNode(name=".lixeira")
+        self.trash = DirectoryNode(name="Lixeira")
         self.root.add_child(self.trash)
 
+    # ---------------------- Comandos ----------------------
     def mkdir(self, name: str):
         dir_node = DirectoryNode(name=name)
         try:
@@ -106,6 +106,16 @@ class FileSystem:
             "modified": file_node.mtime,
             "trashed": False
         }
+
+    def update_file_size(self, node: FileNode, new_size: int):
+        """Atualiza o tamanho do arquivo e o uso total do disco."""
+        global current_disk_usage
+        size_change = new_size - node.size
+        if current_disk_usage + size_change > MAX_DISK_SIZE:
+            raise MemoryError("Espaço em disco insuficiente para salvar as alterações!")
+        current_disk_usage += size_change
+        node.size = new_size
+        node.touch()
 
     def cd(self, name: str):
         if name == "..":
@@ -189,7 +199,36 @@ class FileSystem:
         global current_disk_usage
         return current_disk_usage
 
-fs = FileSystem()
+    # ---------------------- Novidade: Cópia de arquivos/pastas ----------------------
+    def add_disk_usage_for_node(self, node: Node):
+        """Incrementa o uso de disco ao colar um arquivo ou pasta."""
+        global current_disk_usage
+        if isinstance(node, FileNode):
+            if current_disk_usage + node.size > MAX_DISK_SIZE:
+                raise MemoryError("Espaço em disco insuficiente para a cópia!")
+            current_disk_usage += node.size
+        elif isinstance(node, DirectoryNode):
+            for child in node.children:
+                self.add_disk_usage_for_node(child)
 
-if __name__ == "__main__":
-    app = FileSystem()
+    def copy_node(self, node: Node, target_dir: Optional[DirectoryNode] = None):
+        """Cria uma cópia de um nó (arquivo ou diretório) no target_dir ou cwd."""
+        import copy
+        target_dir = target_dir or self.cwd
+        new_node = copy.deepcopy(node)
+
+        # Garante que o nome não exista no destino
+        original_name = new_node.name
+        counter = 1
+        while any(c.name == new_node.name for c in target_dir.children):
+            new_node.name = f"{original_name} - Cópia({counter})"
+            counter += 1
+
+        target_dir.add_child(new_node)
+
+        # Atualiza o uso do disco
+        self.add_disk_usage_for_node(new_node)
+        return new_node
+
+# ---------------------- Instância global ----------------------
+fs = FileSystem()
