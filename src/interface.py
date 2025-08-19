@@ -2,12 +2,7 @@ import tkinter as tk
 from tkinter import simpledialog, messagebox, ttk
 import copy
 import re
-
-# =================================================================
-# --- Componentes do Sistema de Arquivos (Simulado) ---
-#    (Incluídos aqui para tornar o código autônomo)
-# =================================================================
-MAX_DISK_SIZE = 1000000  # Tamanho total do disco em bytes
+from filesystem import MAX_DISK_SIZE, fs
 
 class Node:
     """Nó base para arquivos e diretórios."""
@@ -49,7 +44,7 @@ class DirectoryNode(Node):
 class FileSystem:
     def __init__(self, max_size):
         self.root = None
-        self.cwd = None  # Current Working Directory
+        self.cwd = None  
         self.trash = None # Diretório da Lixeira
         self.total_disk_usage = 0
         self.max_size = max_size
@@ -165,9 +160,6 @@ class FileSystem:
         full_path = "C:/" + "/".join(path_nodes)
         return full_path
 
-# =================================================================
-# --- Inicializa o Sistema de Arquivos ---
-# =================================================================
 fs = FileSystem(MAX_DISK_SIZE)
 if not fs.root:
     fs.root = DirectoryNode("C:")
@@ -176,9 +168,6 @@ if not fs.root:
     fs.mkdir("Lixeira")
     fs.trash = fs.root.get_child("Lixeira")
 
-# =================================================================
-# --- Classe FileExplorer (GUI) ---
-# =================================================================
 class FileExplorer(tk.Tk):
     def __init__(self):
         super().__init__()
