@@ -15,6 +15,7 @@ if not hasattr(fs, 'root') or fs.root is None:
     else:
         fs.trash = fs.root.get_child("Lixeira")
 
+
 # ---------------- Função auxiliar ----------------
 def exists_in_tree(node: DirectoryNode, name: str) -> bool:
     """Verifica se já existe um arquivo ou pasta com o mesmo nome em toda a árvore a partir do nó dado."""
@@ -28,17 +29,6 @@ def exists_in_tree(node: DirectoryNode, name: str) -> bool:
                 return True
     return False
 
-# Adiciona método get_size() no DirectoryNode se ainda não existir
-if not hasattr(DirectoryNode, 'get_size'):
-    def get_size(self):
-        total = 0
-        for child in self.children:
-            if isinstance(child, FileNode):
-                total += child.size
-            elif isinstance(child, DirectoryNode):
-                total += child.get_size()
-        return total
-    DirectoryNode.get_size = get_size
 
 # ---------------- Classe FileExplorer ----------------
 class FileExplorer(tk.Tk):
@@ -266,7 +256,7 @@ class FileExplorer(tk.Tk):
             btn = tk.Button(frame, text="Ir para o local do arquivo", command=go_to, bg="#cce5ff")
             btn.pack(side="right", padx=5, pady=2)
 
-    # Colar
+    # -------------------- Colar --------------------
     def paste_node(self):
         if not self.copied_node:
             messagebox.showerror("Erro", "Nenhum arquivo ou pasta para colar.")
@@ -288,11 +278,15 @@ class FileExplorer(tk.Tk):
         new_node.parent = fs.cwd
         fs.cwd.children.append(new_node)
 
-        # --- Atualiza uso de disco ---
-        if isinstance(new_node, FileNode):
-            fs.total_disk_usage += new_node.size
-        elif isinstance(new_node, DirectoryNode):
-            fs.total_disk_usage += new_node.get_size()
+        # --- Atualiza o uso de disco corretamente ---
+        def increment_disk_usage(node):
+            if isinstance(node, FileNode):
+                fs.total_disk_usage += node.size
+            elif isinstance(node, DirectoryNode):
+                for child in node.children:
+                    increment_disk_usage(child)
+
+        increment_disk_usage(new_node)
 
         self.copied_node = None
         self.refresh()
