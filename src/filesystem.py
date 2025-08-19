@@ -4,13 +4,13 @@ from typing import List, Optional
 from pathlib import Path
 import copy
 
-# ---------------------- Configurações ----------------------
-MAX_CHILDREN = 5
+# Configurações 
+MAX_CHILDREN = 10
 MAX_DISK_SIZE = 1024 * 10240  # 10 MB
 current_disk_usage = 0
 file_index_table = {}
 
-# ---------------------- Nodes ----------------------
+# No da arvore
 @dataclass
 class Node:
     name: str
@@ -67,7 +67,7 @@ class DirectoryNode(Node):
                 return
         raise FileNotFoundError(f"Nó '{name}' não encontrado em {self.path}")
 
-# ---------------------- FileSystem ----------------------
+# FileSystem
 class FileSystem:
     def __init__(self):
         self.root = DirectoryNode(name="C:")
@@ -75,7 +75,7 @@ class FileSystem:
         self.trash = DirectoryNode(name="Lixeira")
         self.root.add_child(self.trash)
 
-    # ---------------------- Comandos ----------------------
+    # Comandos 
     def mkdir(self, name: str):
         dir_node = DirectoryNode(name=name)
         try:
@@ -199,17 +199,23 @@ class FileSystem:
         global current_disk_usage
         return current_disk_usage
 
-    # ---------------------- Novidade: Cópia de arquivos/pastas ----------------------
     def add_disk_usage_for_node(self, node: Node):
-        """Incrementa o uso de disco ao colar um arquivo ou pasta."""
+        """Calcula o tamanho da árvore do nó e o adiciona ao uso do disco."""
         global current_disk_usage
-        if isinstance(node, FileNode):
-            if current_disk_usage + node.size > MAX_DISK_SIZE:
-                raise MemoryError("Espaço em disco insuficiente para a cópia!")
-            current_disk_usage += node.size
-        elif isinstance(node, DirectoryNode):
-            for child in node.children:
-                self.add_disk_usage_for_node(child)
+        
+        def _get_size_recursive(n: Node) -> int:
+            if isinstance(n, FileNode):
+                return n.size
+            elif isinstance(n, DirectoryNode):
+                return sum(_get_size_recursive(child) for child in n.children)
+            return 0
+            
+        size_to_add = _get_size_recursive(node)
+        
+        if current_disk_usage + size_to_add > MAX_DISK_SIZE:
+            raise MemoryError("Espaço em disco insuficiente para a cópia!")
+        
+        current_disk_usage += size_to_add
 
     def copy_node(self, node: Node, target_dir: Optional[DirectoryNode] = None):
         """Cria uma cópia de um nó (arquivo ou diretório) no target_dir ou cwd."""
