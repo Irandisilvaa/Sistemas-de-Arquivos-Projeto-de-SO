@@ -10,7 +10,7 @@ Ele simula operações como:
 - Gerenciamento de espaço em disco.
 - Lixeira e restauração de arquivos.
 
-Tudo isso acontece em um **ambiente seguro e controlado**, ideal para fins educacionais.
+Tudo isso acontece em um **ambiente virtual**, ideal para fins educacionais.
 
 ---
 
