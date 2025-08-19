@@ -3,7 +3,7 @@ from tkinter import simpledialog, messagebox, ttk, filedialog
 from filesystem import DirectoryNode, FileNode, MAX_DISK_SIZE, fs
 import copy
 
-# Inicializa a raiz C:
+# --- Inicializa a raiz C: ---
 if not hasattr(fs, 'root') or fs.root is None:
     fs.root = DirectoryNode("C:")
     fs.cwd = fs.root
@@ -16,7 +16,7 @@ if not hasattr(fs, 'root') or fs.root is None:
         fs.trash = fs.root.get_child("Lixeira")
 
 
-# Função auxiliar
+# ---------------- Função auxiliar ----------------
 def exists_in_tree(node: DirectoryNode, name: str) -> bool:
     """
     Verifica se já existe um arquivo ou pasta com o mesmo nome
@@ -32,7 +32,7 @@ def exists_in_tree(node: DirectoryNode, name: str) -> bool:
                 return True
     return False
 
-# Classe FileExplorer
+# ---------------- Classe FileExplorer ----------------
 class FileExplorer(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -101,17 +101,18 @@ class FileExplorer(tk.Tk):
                                relief="flat", command=self.search)
         search_btn.pack(side="left")
 
-        #  Caminho atual
+        # --- Caminho atual ---
         self.path_label = tk.Label(self, text="C:/", font=("Consolas", 12, "bold"), fg="#1a73e8", bg="#e6e6e6")
         self.path_label.pack(fill="x", pady=4, padx=10)
 
-        #  Uso de disco 
+        # --- Uso de disco ---
         self.disk_label = tk.Label(self, text="", font=("Consolas", 10), bg="#e6e6e6", fg="#333333")
         self.disk_label.pack(fill="x", pady=2, padx=10)
 
         self.disk_progress = ttk.Progressbar(self, orient="horizontal", length=450, mode="determinate")
         self.disk_progress.pack(pady=2, padx=10)
 
+        # --- Frame principal com scroll ---
         self.main_frame = tk.Frame(self, bg="#e6e6e6")
         self.main_frame.pack(fill="both", expand=True, padx=10, pady=5)
 
@@ -132,7 +133,7 @@ class FileExplorer(tk.Tk):
 
         self.refresh()
 
-    # Funções de interface
+    # -------------------- Funções de interface --------------------
     def refresh(self):
         """Atualiza a exibição do explorador de arquivos."""
         for widget in self.scrollable_frame.winfo_children():
@@ -165,7 +166,8 @@ class FileExplorer(tk.Tk):
                                 bg="#e6ffe6", fg="#004d00", relief="flat",
                                 activebackground="#ccffcc", command=lambda n=node: self.show_info(n))
                 b.pack(fill="x", padx=5, pady=2)
-                
+        
+        # Habilita ou desabilita o botão de colar e muda a cor para feedback visual
         if self.copied_node is None:
             self.paste_btn.config(state="disabled", **self.paste_btn_style_disabled)
         else:
@@ -185,8 +187,9 @@ class FileExplorer(tk.Tk):
         info_label = tk.Label(info_win, text=text, justify="left", font=("Consolas", 10))
         info_label.pack(padx=10, pady=10)
 
-        # Se for um arquivo de texto, adicionar botões para abrir e editar 
+        # --- Se for um arquivo de texto, adicionar botões para abrir e editar ---
         if isinstance(node, FileNode) and isinstance(getattr(node, "content", None), str):
+            # Botão Abrir
             def open_text():
                 text_win = tk.Toplevel(self)
                 text_win.title(f"Conteúdo: {node.name}")
@@ -200,7 +203,7 @@ class FileExplorer(tk.Tk):
             open_btn = tk.Button(info_win, text="📖 Abrir", command=open_text, bg="#d4edda")
             open_btn.pack(pady=5)
 
-        
+            # Adiciona o botão "Editar" somente se o diretório atual não for a Lixeira
             if fs.cwd != fs.trash:
                 def edit_text():
                     edit_win = tk.Toplevel(self)
@@ -231,7 +234,8 @@ class FileExplorer(tk.Tk):
 
                 edit_btn = tk.Button(info_win, text="✏️ Editar", command=edit_text, bg="#fff3cd")
                 edit_btn.pack(pady=5)
-# se estiver na lixeira eu posso restaurar 
+
+        # --- Se estiver na lixeira, permitir restaurar
         if fs.cwd == fs.trash:
             def restore_node():
                 try:
