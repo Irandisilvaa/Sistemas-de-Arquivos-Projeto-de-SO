@@ -49,8 +49,7 @@ class FileExplorer(tk.Tk):
         tk.Button(left_frame, text="📝 Criar Arquivo", command=self.touch, **btn_style).pack(side="left", padx=3)
         tk.Button(left_frame, text="🗑️ Remover", command=self.rm, **btn_style).pack(side="left", padx=3)
         tk.Button(left_frame, text="⬆️ Voltar", command=self.cd_up, **btn_style).pack(side="left", padx=3)
-        tk.Button(left_frame, text="🔄 Atualizar", command=self.refresh, **btn_style).pack(side="left", padx=3)
-
+        
         # Barra de pesquisa separada à direita
         right_frame = tk.Frame(self.top_frame, bg="#2f3640")
         right_frame.pack(side="right", padx=10)
@@ -97,8 +96,9 @@ class FileExplorer(tk.Tk):
 
         self.refresh()
 
+
     # -------------------- Funções de interface --------------------
-    def refresh(self):
+    def refresh(self): #realizamos a cada o refresh a depois de cada interação que fazemos
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
 
