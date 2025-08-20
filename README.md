@@ -1,13 +1,70 @@
-Este projeto consiste em um sistema de arquivos simulado, implementado em Python, com interface gráfica baseada em Tkinter. O objetivo é fornecer uma ferramenta didática que permite ao usuário criar, ler, escrever, excluir e gerenciar arquivos e diretórios, de forma controlada, simulando o funcionamento interno de sistemas de arquivos reais.
+# 🗂️ Sistema de Arquivos Simulado em Python
 
-A estrutura interna do sistema é baseada em uma árvore hierárquica de diretórios, onde cada nó da árvore representa um arquivo ou diretório. Os diretórios são representados pela classe DirectoryNode, que contém uma lista de filhos (children) funcionando como tabela de índices, permitindo localizar rapidamente arquivos e subdiretórios. Os arquivos são representados pela classe FileNode, que mantém metadados como nome, tamanho, conteúdo, datas de criação, modificação e acesso, simulando atributos típicos de um inode em sistemas de arquivos reais. Cada nó mantém referência ao seu pai e, no caso de arquivos removidos, ao seu pai original, permitindo operações de restauração a partir da lixeira.
+## 📌 Sobre o Projeto
+Este projeto é um **sistema de arquivos simulado** desenvolvido em **Python**, com uma **interface gráfica** construída em **Tkinter**.  
+O objetivo principal é servir como uma **ferramenta didática**, permitindo que os usuários explorem e compreendam, de forma prática, o funcionamento interno de sistemas de arquivos reais.  
 
-O FileSystem gerencia todas as operações do sistema de arquivos, incluindo criação de diretórios (mkdir), navegação entre diretórios (cd), criação de arquivos (touch), leitura e escrita de conteúdo, remoção de arquivos ou diretórios com envio para a lixeira, restauração de arquivos deletados e listagem do conteúdo dos diretórios (ls). O sistema também controla o uso de disco simulado (MAX_DISK_SIZE) e atualiza o uso de espaço em tempo real, como ocorreria com blocos alocados em um sistema de arquivos real. A lógica interna calcula o tamanho ocupado por arquivos e diretórios recursivamente, garantindo que o limite máximo de armazenamento não seja ultrapassado.
+Ele simula operações como:
+- Criação, leitura, escrita e exclusão de arquivos e diretórios.
+- Navegação entre pastas.
+- Gerenciamento de espaço em disco.
+- Lixeira e restauração de arquivos.
 
-O sistema permite criar arquivos de texto diretamente na interface, importar arquivos externos (como imagens ou PDFs) e definir manualmente o tamanho de arquivos genéricos, simulando a alocação de blocos de armazenamento. A lixeira é representada por um diretório .lixeira na raiz, permitindo que arquivos ou diretórios sejam movidos ao invés de deletados permanentemente. A restauração preserva o histórico e os metadados originais, incluindo a posição na árvore de diretórios.
+Tudo isso acontece em um **ambiente virtual**, ideal para fins educacionais.
 
-A interface gráfica foi projetada para ser intuitiva e responsiva. Permite criar pastas, criar arquivos, remover arquivos ou pastas, navegar entre diretórios, atualizar a visualização da lista de arquivos, pesquisar arquivos ou pastas recursivamente e exibir informações detalhadas de cada nó, incluindo tipo, tamanho, datas de criação, modificação e acesso. Arquivos na lixeira podem ser restaurados diretamente através da interface. A barra de uso de disco indica a proporção de espaço ocupado em relação ao limite máximo, simulando visualmente o gerenciamento de blocos do sistema de arquivos.
+---
 
-O sistema é totalmente simulado em memória, sem acesso ao disco real, oferecendo um ambiente seguro e controlado para testes e aprendizado. Cada diretório possui um limite máximo de filhos (MAX_CHILDREN) e a árvore de diretórios tem como raiz C:/. A implementação é modular, com separação entre lógica do sistema de arquivos (filesystem.py), instância do sistema (comandos.py) e interface gráfica (interface.py), facilitando manutenção, compreensão e futuras expansões.
+## ⚙️ Estrutura e Funcionalidades
 
-Este sistema oferece uma forma prática e visual de entender conceitos fundamentais de gerenciamento de arquivos, metadados, tabela de índices, blocos de armazenamento e árvore de diretórios, permitindo ao usuário interagir com os conceitos de forma intuitiva e educativa.
+O sistema é baseado em uma **árvore hierárquica de diretórios**, totalmente em memória, com gerenciamento de um "disco" simulado limitado por `MAX_DISK_SIZE`.
+
+### 🔹 Componentes Internos
+- **DirectoryNode (Diretórios)**  
+  Representam pastas, funcionando como tabelas de índices.  
+  Cada diretório armazena filhos (`children`), que podem ser arquivos ou outros diretórios.
+
+- **FileNode (Arquivos)**  
+  Representam arquivos, contendo:  
+  - Nome  
+  - Tamanho  
+  - Conteúdo  
+  - Datas de criação, modificação e acesso  
+  (simulando inodes de sistemas reais)
+
+- **FileSystem (Sistema de Arquivos)**  
+  Responsável pelas operações principais:
+  - **Navegação:** `cd` para trocar de diretório  
+  - **Gerenciamento:** `mkdir` (criar diretório), `touch` (criar arquivo), `ls` (listar conteúdo)  
+  - **Manipulação de Conteúdo:** leitura e escrita em arquivos  
+  - **Lixeira:** itens removidos vão para `.lixeira` em vez de exclusão definitiva  
+  - **Uso do Disco:** cálculo em tempo real do espaço ocupado  
+
+---
+
+## 🖥️ Interface Gráfica (GUI)
+
+A interface foi projetada para ser **intuitiva** e facilitar o uso.
+
+### 🔹 Navegação e Visualização
+- Barra de caminho exibindo o diretório atual.  
+- Lista visual de arquivos e pastas.  
+
+### 🔹 Operações Disponíveis
+- Criar novas pastas  
+- Criar arquivos de texto   
+- Remover arquivos/pastas (enviando para a lixeira)  
+- Restaurar itens da lixeira
+- Editar o conteúdo dos arquivos
+- Copiar arquivos e colar em outro lugar na árvore 
+
+### 🔹 Recursos Visuais
+- **Barra de uso do disco** mostrando o espaço ocupado.  
+- Exibição detalhada de informações de arquivos (tipo, tamanho, datas).  
+- **Pesquisa recursiva** de arquivos e diretórios.  
+
+---
+
+## 🚀 Como Executar
+
+Execute o interface.py ou abertura.py 
+
